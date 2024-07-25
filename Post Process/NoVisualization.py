@@ -59,8 +59,6 @@ def read_adc_data(adc_data_bin_file, mmwave_device_0, mmwave_device_1):
 
     expected_shape_0 = (num_frames, num_chirps_0, num_samples_0, num_rx)
     expected_shape_1 = (num_frames, num_chirps_1, num_samples_1, num_rx)
-    print(f"Expected shape for adc_data_0: {expected_shape_0}")
-    print(f"Expected shape for adc_data_1: {expected_shape_1}")
 
     adc_data_0 = adc_data_0.reshape((num_frames, num_chirps_0, num_samples_0, num_rx)).transpose(2, 1, 0, 3)
     adc_data_1 = adc_data_1.reshape((num_frames, num_chirps_1, num_samples_1, num_rx)).transpose(2, 1, 0, 3)
@@ -125,9 +123,8 @@ def analyze_slopes(timestamps):
     print("Times:", np.diff(times))
     
     slopes = np.diff(freqs) / np.diff(times)
-    print(slopes)
     positive_slopes = slopes[slopes > 0]
-    
+    print(positive_slopes)
     slopes_reshaped = positive_slopes.reshape(-1, 1)
     dbscan = DBSCAN(eps=0.01, min_samples=10).fit(slopes_reshaped)
     labels = dbscan.labels_
@@ -201,15 +198,27 @@ def process_adc_data(adc_data, num_samples, num_chirps, num_frames, rx_channel, 
             peak_idx_1 = cfar_ca1d(complex_magnitude_1, num_train, num_guard, rate_fa)
 
             for idx in peak_idx_0:
-                if not any(np.isclose(time_indices_0[idx], t[0]) for t in timestamps_0) and (len(timestamps_0) == 0 or time_indices_0[idx] > timestamps_0[-1][0] + 0.001):
+                if not any(np.isclose(time_indices_0[idx], t[0]) for t in timestamps_0) and (len(timestamps_0) == 0 or time_indices_0[idx] > timestamps_0[-1][0] + 0.1):
                     timestamps_0.append((time_indices_0[idx], mmwave_devices[0].freq / 1e9))
+                # if not any(np.isclose(time_indices_0[idx], t[0]) for t in timestamps_0):
+                #     if (len(timestamps_0) != 0 and time_indices_0[idx] < timestamps_0[-1][0] + 0.1):
+                #         timestamps_0.pop()
+                #         timestamps_0.append((time_indices_0[idx], mmwave_devices[0].freq / 1e9))
+                #     elif (len(timestamps_0) == 0 or time_indices_0[idx] > timestamps_0[-1][0] + 0.1):
+                #         timestamps_0.append((time_indices_0[idx], mmwave_devices[0].freq / 1e9))
 
             for idx in peak_idx_1:
-                if not any(np.isclose(time_indices_1[idx], t[0]) for t in timestamps_1) and (len(timestamps_1) == 0 or time_indices_1[idx] > timestamps_1[-1][0] + 0.001):
+                if not any(np.isclose(time_indices_1[idx], t[0]) for t in timestamps_1) and (len(timestamps_1) == 0 or time_indices_1[idx] > timestamps_1[-1][0] + 0.1):
                     timestamps_1.append((time_indices_1[idx], mmwave_devices[1].freq / 1e9))
+                # if not any(np.isclose(time_indices_1[idx], t[0]) for t in timestamps_1):
+                #     if (len(timestamps_1) != 0 and time_indices_1[idx] < timestamps_1[-1][0] + 0.1):
+                #         timestamps_1.pop()
+                #         timestamps_1.append((time_indices_1[idx], mmwave_devices[1].freq / 1e9))
+                #     elif (len(timestamps_1) == 0 or time_indices_1[idx] > timestamps_1[-1][0] + 0.1):
+                #         timestamps_1.append((time_indices_1[idx], mmwave_devices[1].freq / 1e9))
 
 def main():
-    adc_data_bin_file = '/Users/edwardju/Downloads/adc_data_LowSlopeTest3.bin'
+    adc_data_bin_file = '/Users/edwardju/Downloads/adc_data_75degTest2.bin'
     mmwave_setup_json_file = '/Users/edwardju/Downloads/LowSlopeTest2.mmwave.json'
 
     mmwave_device_profile_0 = MMWaveDevice(adc_data_bin_file, mmwave_setup_json_file, profile_id=0)
@@ -252,8 +261,8 @@ def main():
         timestamps = timestamps_0 + timestamps_1
         timestamps.sort(key=lambda x: x[0])
         unique_slopes, slope_counts, slope_outliers = analyze_slopes(timestamps)
-        print(slope_outliers)
-        print("Slopes:", unique_slopes, "Counts:", slope_counts)
+        # print(slope_outliers)
+        # print("Slopes:", unique_slopes, "Counts:", slope_counts)
 
     print("\nEstimated Results: \n")
 
