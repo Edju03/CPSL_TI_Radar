@@ -32,7 +32,7 @@ def read_adc_data(adc_data_bin_file, mmwave_device_0, mmwave_device_1):
     num_samples_1 = mmwave_device_1.num_sample_per_chirp
     num_chirps_0 = mmwave_device_0.num_chirp_per_frame 
     num_chirps_1 = mmwave_device_1.num_chirp_per_frame
-    num_frames = mmwave_device_0.num_frame #
+    num_frames = mmwave_device_0.num_frame
     num_rx = mmwave_device_0.num_rx_chnl  
     num_lanes = 4  
 
@@ -53,10 +53,38 @@ def read_adc_data(adc_data_bin_file, mmwave_device_0, mmwave_device_1):
 
     adc_data = adc_data.T.flatten()
 
-    # Separate interleaved data
-    adc_data_0 = adc_data[0::2].reshape((num_frames, num_chirps_0, num_samples_0, num_rx)).transpose(2, 1, 0, 3)
-    adc_data_1 = adc_data[1::2].reshape((num_frames, num_chirps_1, num_samples_1, num_rx)).transpose(2, 1, 0, 3)
+    adc_data_0 = []
+    adc_data_1 = []
+    
+    chirp_size_0 = num_samples_0 * num_rx 
+    chirp_size_1 = num_samples_1 * num_rx 
+    counter = 0
+    
+    for frame_idx in range(num_frames):
+        for chirp_idx in range(num_chirps_0):
+            # if chirp_idx % 2 == 0:
+                start_idx = frame_idx * (num_chirps_0 + num_chirps_1) * (num_samples_0 * num_rx) + (chirp_idx * 2) * chirp_size_0
+                end_idx = start_idx + chirp_size_0
+                chirp_data = adc_data[start_idx:end_idx]
+                adc_data_0.append(chirp_data)
+                counter = counter + 1
+            # else:
+                start_idx = frame_idx * (num_chirps_0 + num_chirps_1) * (num_samples_1 * num_rx) + (chirp_idx * 2 + 1) * chirp_size_1
+                end_idx = start_idx + chirp_size_1
+                chirp_data = adc_data[start_idx:end_idx]
+                adc_data_1.append(chirp_data)
+    
+    adc_data_0 = np.concatenate(adc_data_0)
+    adc_data_1 = np.concatenate(adc_data_1)
 
+    expected_shape_0 = (num_frames, num_chirps_0, num_samples_0, num_rx)
+    expected_shape_1 = (num_frames, num_chirps_1, num_samples_1, num_rx)
+    print(f"Expected shape for adc_data_0: {expected_shape_0}")
+    print(f"Expected shape for adc_data_1: {expected_shape_1}")
+
+    adc_data_0 = adc_data_0.reshape((num_frames, num_chirps_0, num_samples_0, num_rx)).transpose(2, 1, 0, 3)
+    adc_data_1 = adc_data_1.reshape((num_frames, num_chirps_1, num_samples_1, num_rx)).transpose(2, 1, 0, 3)
+    
     return adc_data_0, adc_data_1
 
 def analyze_periods(timestamps):
@@ -84,6 +112,8 @@ def analyze_slopes(timestamps):
     times = np.array([t[0] for t in timestamps])
     freqs = np.array([t[1] for t in timestamps])
     
+    print("Times:", times)
+    print("Freqs:", freqs)
     slopes = np.diff(freqs) / np.diff(times)
     
     slopes_reshaped = slopes.reshape(-1, 1)
@@ -275,12 +305,18 @@ def plot_scrollable_adc_data(adc_data, num_samples, num_chirps, num_frames, rx_c
 
             time_per_sample = 1 / sample_rate[0]
             start_time_0 = frame_idx * frame_periodicity[0] + (2 * chirp_idx) * (idle_time[0] + ramp_time[0]) + (idle_time[0] + adc_start_time[0])
-            num_samples_current = num_samples[0]
 
             start_time_1 = frame_idx * frame_periodicity[1] + (2 * chirp_idx + 1) * (idle_time[1] + ramp_time[1]) + (idle_time[1] + adc_start_time[1])
 
-            time_indices_0 = start_time_0 + np.arange(num_samples_current) * time_per_sample
+            time_indices_0 = start_time_0 + np.arange(num_samples[0]) * time_per_sample
             time_indices_1 = start_time_1 + np.arange(num_samples[1]) * time_per_sample
+            # print("ID", idle_time[1] + ramp_time[1])
+            # print(num_samples[0] * time_per_sample)
+            print("I:", (idle_time[1] + ramp_time[1]))
+            print("start: ", start_time_0, start_time_1)
+            print("end: ", time_indices_0[-1], time_indices_1[-1])
+            print(np.arange(num_samples[1]) * time_per_sample)
+            print(np.arange(num_samples[0]) * time_per_sample)
 
             plot_data_real.extend(chirp_data_0.real)
             plot_data_imag.extend(chirp_data_0.imag)
@@ -497,8 +533,8 @@ def plot_scrollable_adc_data(adc_data, num_samples, num_chirps, num_frames, rx_c
     plt.show()
 
 def main():
-    adc_data_bin_file = '/Users/edwardju/Downloads/adc_data_45degTest2.bin'
-    mmwave_setup_json_file = '/Users/edwardju/Downloads/45degTest2.mmwave.json'
+    adc_data_bin_file = '/Users/edwardju/Downloads/adc_data_LowSlopeTest3.bin'
+    mmwave_setup_json_file = '/Users/edwardju/Downloads/LowSlopeTest2.mmwave.json'
 
     mmwave_device_profile_0 = MMWaveDevice(adc_data_bin_file, mmwave_setup_json_file, profile_id=0)
     mmwave_device_profile_0.print_device_configuration()
