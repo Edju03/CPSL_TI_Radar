@@ -109,27 +109,30 @@ def analyze_periods(timestamps):
     return unique_periods, counts
 
 def analyze_slopes(timestamps):
-    times = np.array([t[0] for t in timestamps])
-    freqs = np.array([t[1] for t in timestamps])
+    times = np.array([(t[0]) for t in timestamps])
+    freqs = np.array([(t[1]) for t in timestamps])
+
+    print(freqs)
+    print(times)
+    print("Freqs:", np.diff(freqs))
+    print("Times:", np.diff(times))
     
-    print("Times:", times)
-    print("Freqs:", freqs)
     slopes = np.diff(freqs) / np.diff(times)
-    
-    slopes_reshaped = slopes.reshape(-1, 1)
-    dbscan = DBSCAN(eps=0.01, min_samples=5).fit(slopes_reshaped)
+    positive_slopes = slopes[slopes > 0]
+    print(positive_slopes)
+    slopes_reshaped = positive_slopes.reshape(-1, 1)
+    dbscan = DBSCAN(eps=0.01, min_samples=10).fit(slopes_reshaped)
     labels = dbscan.labels_
 
     unique_labels, counts = np.unique(labels, return_counts=True)
     main_cluster_label = unique_labels[np.argmax(counts)]
 
-    filtered_slopes = slopes[labels == main_cluster_label]
-    outliers = slopes[labels != main_cluster_label]
-    print("Slope Outliers:", outliers)
+    filtered_slopes = positive_slopes[labels == main_cluster_label]
+    outliers = positive_slopes[labels != main_cluster_label]
 
     unique_slopes, counts = np.unique(filtered_slopes, return_counts=True)
 
-    return unique_slopes, counts
+    return unique_slopes, counts, outliers
 
 def analyze_interference_batches(timestamps):
     batches = []
@@ -315,8 +318,8 @@ def plot_scrollable_adc_data(adc_data, num_samples, num_chirps, num_frames, rx_c
             print("I:", (idle_time[1] + ramp_time[1]))
             print("start: ", start_time_0, start_time_1)
             print("end: ", time_indices_0[-1], time_indices_1[-1])
-            print(np.arange(num_samples[1]) * time_per_sample)
-            print(np.arange(num_samples[0]) * time_per_sample)
+            # print(np.arange(num_samples[1]) * time_per_sample)
+            # print(np.arange(num_samples[0]) * time_per_sample)
 
             plot_data_real.extend(chirp_data_0.real)
             plot_data_imag.extend(chirp_data_0.imag)
@@ -344,12 +347,14 @@ def plot_scrollable_adc_data(adc_data, num_samples, num_chirps, num_frames, rx_c
             for magnitude, time_index in zip(complex_magnitude_0, time_indices_0):
                 if magnitude > thresholds_0:
                     if not any(np.isclose(time_index, t[0]) for t in timestamps_0):
-                        timestamps_0.append((time_index, mmwave_devices[0].freq /1e9))
+                        if len(timestamps_0) == 0 or abs(time_index - timestamps_0[-1][0]) > (0.1):
+                            timestamps_0.append((time_index, mmwave_devices[0].freq /1e9))
 
             for magnitude, time_index in zip(complex_magnitude_1, time_indices_1):
                 if magnitude > thresholds_1:
                     if not any(np.isclose(time_index, t[0]) for t in timestamps_1):
-                        timestamps_1.append((time_index, mmwave_devices[1].freq /1e9))
+                        if len(timestamps_1) == 0 or abs(time_index - timestamps_1[-1][0]) > (0.1):
+                            timestamps_1.append((time_index, mmwave_devices[1].freq /1e9))
 
         line_real.set_data(times, plot_data_real)
         line_imag.set_data(times, plot_data_imag)
@@ -449,7 +454,7 @@ def plot_scrollable_adc_data(adc_data, num_samples, num_chirps, num_frames, rx_c
         if len(timestamps_0 + timestamps_1) > 1:
             timestamp = (timestamps_0 + timestamps_1)
             timestamp.sort(key=lambda x: x[0])
-            unique_slope, count = analyze_slopes(timestamp)
+            unique_slope, count, slope_outliers = analyze_slopes(timestamp)
             print("Slope")
             print(unique_slope)
             if len(timestamp) > 2:
