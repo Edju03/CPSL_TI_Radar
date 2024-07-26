@@ -218,8 +218,8 @@ def process_adc_data(adc_data, num_samples, num_chirps, num_frames, rx_channel, 
                 #         timestamps_1.append((time_indices_1[idx], mmwave_devices[1].freq / 1e9))
 
 def main():
-    adc_data_bin_file = '/Users/edwardju/Downloads/adc_data_75degTest2.bin'
-    mmwave_setup_json_file = '/Users/edwardju/Downloads/LowSlopeTest2.mmwave.json'
+    adc_data_bin_file = '/Users/edwardju/Downloads/adc_data_LowSlope.bin'
+    mmwave_setup_json_file = '/Users/edwardju/Downloads/LowSlopeTest3.mmwave.json'
 
     mmwave_device_profile_0 = MMWaveDevice(adc_data_bin_file, mmwave_setup_json_file, profile_id=0)
     mmwave_device_profile_0.print_device_configuration()
