@@ -6,9 +6,13 @@
 Useful Codes:
 
 MMWaveDevice: Used to set up the profile and configuration 
+
 NoVisualization: Estimator class (Two profile) 
+
 estimator: estimator class but reads cfg file instead of json file in NoVisualiation (Two profile)
+
 MultipleProfileSeperatePeriod: Plots adc data, range doppler plot, and other useful plots for post analysis
+
 GraphPrediction: GraphGenration + Prediction (Two profile)
 
 
