@@ -15,6 +15,8 @@ MultipleProfileSeperatePeriod: Plots adc data, range doppler plot, and other use
 
 GraphPrediction: GraphGenration + Prediction (Two profile)
 
+----------
+
 
 To run the code you need to have a json file and bin file (or cfg and bin file for NoVisualization)
 
