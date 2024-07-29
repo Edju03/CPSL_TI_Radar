@@ -24,4 +24,11 @@ To run the code you need to have a json file and bin file (or cfg and bin file f
 
 You can generate the json and bin file using mmWaveStudio software.
 
+First follow the steps in https://github.com/davidmhunt/mmWaveStudioProcessing/blob/main/Guides/Data%20Capture%20Quick%20Guide.md
+
+After running you can go to your post process file to download the bin file. You can also press the export json file button in your left to download the json file.
+
+------------
+
+In the code
 Identify the file path and modify in the code to be able to run.
