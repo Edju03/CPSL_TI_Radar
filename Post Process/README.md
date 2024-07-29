@@ -31,4 +31,4 @@ After running you can go to your post process file to download the bin file. You
 ------------
 
 In the code
-Identify the file path and modify in the code to be able to run.
+Identify the file path and modify the file path in the code to be able to run.
